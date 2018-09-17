@@ -1546,6 +1546,8 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
       controlBarFloating.xConstraint.constant = xPos
       controlBarFloating.yConstraint.constant = yPos
     }
+
+    player.events.emit(.windowResized, data: window.frame)
   }
 
   // resize framebuffer in videoView after resizing.
@@ -1560,6 +1562,11 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
       videoView.videoLayer.contentsScale = window!.backingScaleFactor
     }
 
+  }
+
+  func windowDidMove(_ notification: Notification) {
+    guard let window = window else { return }
+    player.events.emit(.windowMoved, data: window.frame)
   }
 
   // MARK: - Window delegate: Active status
@@ -2802,12 +2809,15 @@ extension MainWindowController: PIPViewControllerDelegate {
 
     pip.presentAsPicture(inPicture: pipVideo)
     pipOverlayView.isHidden = false
+
+    player.events.emit(.pipChanged, data: true)
   }
 
   func exitPIP() {
     if pipShouldClose(pip) {
       pip.dismiss(pipVideo)
     }
+    player.events.emit(.pipChanged, data: false)
   }
 
   func doneExitingPIP() {
