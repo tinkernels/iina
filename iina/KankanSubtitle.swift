@@ -69,15 +69,26 @@ class KankansubSupport {
   
   func search(_ query: String ) -> Promise<[KankanSubtitle]> {
     return Promise { resolver in
-      Just.get(searchApi + (query.addingPercentEncoding(withAllowedCharacters:
-            .urlQueryAllowed) ?? "")) { result in
-        guard result.ok else {
+      let urlStr = searchApi + (query.addingPercentEncoding(withAllowedCharacters:
+        .urlQueryAllowed) ?? "")
+      let url = URL(string:urlStr)
+      URLSession.shared.dataTask(with: url!) { result, _, error in
+        guard error == nil else {
           resolver.reject(KankanError.networkError)
           return
         }
-        guard let json = result.json as? [String: Any] else {
-          resolver.reject(KankanError.networkError)
-          return
+        guard let datastring = String(data: result!, encoding: .utf8) == nil
+          ? String(data: result!, encoding: .ascii)
+          : String(data: result!, encoding: .utf8) else{
+            resolver.reject(KankanError.wrongResponseFormat)
+            return
+        }
+        let data = datastring.data(using: .utf8)
+        guard let json = (try? JSONSerialization.jsonObject(with: data!,
+                                                            options: [.allowFragments, .mutableContainers])
+          ) as? [String: Any]  else {
+            resolver.reject(KankanError.wrongResponseFormat)
+            return
         }
         // handle result
         guard let sublist = json["sublist"] as? [[String: Any]] else {
@@ -90,18 +101,18 @@ class KankansubSupport {
           guard let d_url = sub["surl"] as? String else {
             continue
           }
+          // cause of reusing OpenSubCell in SubChooseViewController, mapping values as beblow
           subtitles.append(KankanSubtitle(index: index,
-                                          // cause of reusing OpenSubCell in SubChooseViewController, mapping values as beblow
-                                          filename: (sub["sname"]) as! String + "." + (sub["sext"] as! String),
-                                          langID: sub["language"] as! String,
-                                          rating: sub["simility"] as! String,
-                                          dlCount: "-",
-                                          subDlLink: d_url
-                                          ))
+            filename: (sub["sname"]) as! String + "." + (sub["sext"] as! String),
+            langID: sub["language"] as! String,
+            rating: sub["simility"] as! String,
+            dlCount: "-",
+            subDlLink: d_url
+          ))
           index += 1
         }
         resolver.fulfill(subtitles)
-      }
+        }.resume()
     }
   }
 
