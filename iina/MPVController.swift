@@ -55,12 +55,13 @@ class MPVController: NSObject {
   var fileLoaded: Bool = false
 
   let observeProperties: [String: mpv_format] = [
-    MPVProperty.trackListCount: MPV_FORMAT_INT64,
+    MPVProperty.trackList: MPV_FORMAT_NONE,
     MPVProperty.vf: MPV_FORMAT_NONE,
     MPVProperty.af: MPV_FORMAT_NONE,
     MPVOption.TrackSelection.vid: MPV_FORMAT_INT64,
     MPVOption.TrackSelection.aid: MPV_FORMAT_INT64,
     MPVOption.TrackSelection.sid: MPV_FORMAT_INT64,
+    MPVOption.Subtitles.secondarySid: MPV_FORMAT_INT64,
     MPVOption.PlaybackControl.pause: MPV_FORMAT_FLAG,
     MPVProperty.chapter: MPV_FORMAT_INT64,
     MPVOption.Video.deinterlace: MPV_FORMAT_FLAG,
@@ -654,7 +655,6 @@ class MPVController: NSObject {
 
   private func onFileLoaded() {
     // mpvSuspend()
-    let paused = getFlag(MPVOption.PlaybackControl.pause)
     setFlag(MPVOption.PlaybackControl.pause, true)
     // Get video size and set the initial window size
     let width = getInt(MPVProperty.width)
@@ -674,7 +674,7 @@ class MPVController: NSObject {
     fileLoaded = true
     // mpvResume()
     if !Preference.bool(for: .pauseWhenOpen) {
-      setFlag(MPVOption.PlaybackControl.pause, paused)
+      setFlag(MPVOption.PlaybackControl.pause, false)
     }
     player.syncUI(.playlist)
   }
@@ -712,32 +712,27 @@ class MPVController: NSObject {
       onVideoParamsChange(UnsafePointer<mpv_node_list>(OpaquePointer(property.data)))
 
     case MPVOption.TrackSelection.vid:
-      needReloadQuickSettingsView = true
-      let data = getInt(MPVOption.TrackSelection.vid)
-      player.info.vid = Int(data)
-      player.getTrackInfo()
-      let currTrack = player.info.currentTrack(.video) ?? .noneVideoTrack
-      player.sendOSD(.track(currTrack))
+      player.info.vid = Int(getInt(MPVOption.TrackSelection.vid))
+      player.postNotification(.iinaVIDChanged)
+      player.sendOSD(.track(player.info.currentTrack(.video) ?? .noneVideoTrack))
 
     case MPVOption.TrackSelection.aid:
-      needReloadQuickSettingsView = true
-      let data = getInt(MPVOption.TrackSelection.aid)
-      player.info.aid = Int(data)
-      player.getTrackInfo()
-      let currTrack = player.info.currentTrack(.audio) ?? .noneAudioTrack
+      player.info.aid = Int(getInt(MPVOption.TrackSelection.aid))
       DispatchQueue.main.sync {
         player.mainWindow?.muteButton.isEnabled = (player.info.aid != 0)
         player.mainWindow?.volumeSlider.isEnabled = (player.info.aid != 0)
       }
-      player.sendOSD(.track(currTrack))
+      player.postNotification(.iinaAIDChanged)
+      player.sendOSD(.track(player.info.currentTrack(.audio) ?? .noneAudioTrack))
 
     case MPVOption.TrackSelection.sid:
-      needReloadQuickSettingsView = true
-      let data = getInt(MPVOption.TrackSelection.sid)
-      player.info.sid = Int(data)
-      player.getTrackInfo()
-      let currTrack = player.info.currentTrack(.sub) ?? .noneSubTrack
-      player.sendOSD(.track(currTrack))
+      player.info.sid = Int(getInt(MPVOption.TrackSelection.sid))
+      player.postNotification(.iinaSIDChanged)
+      player.sendOSD(.track(player.info.currentTrack(.sub) ?? .noneSubTrack))
+
+    case MPVOption.Subtitles.secondarySid:
+      player.info.secondSid = Int(getInt(MPVOption.Subtitles.secondarySid))
+      player.postNotification(.iinaSIDChanged)
 
     case MPVOption.PlaybackControl.pause:
       if let data = UnsafePointer<Bool>(OpaquePointer(property.data))?.pointee {
@@ -863,7 +858,7 @@ class MPVController: NSObject {
     case MPVProperty.playlistCount:
       player.postNotification(.iinaPlaylistChanged)
 
-    case MPVProperty.trackListCount:
+    case MPVProperty.trackList:
       player.trackListChanged()
       player.postNotification(.iinaTracklistChanged)
 

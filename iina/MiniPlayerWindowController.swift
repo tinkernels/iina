@@ -171,7 +171,7 @@ class MiniPlayerWindowController: NSWindowController, NSWindowDelegate, NSPopove
     closeButtonVE.action = #selector(self.close)
     closeButtonBox.action = #selector(self.close)
     closeButtonView.alphaValue = 0
-    closeButtonBackgroundViewVE.layer?.cornerRadius = 8
+    closeButtonBackgroundViewVE.maskImage = .maskImage(cornerRadius: 10)
     closeButtonBackgroundViewBox.isHidden = true
 
     // switching UI
@@ -465,7 +465,6 @@ class MiniPlayerWindowController: NSWindowController, NSWindowDelegate, NSPopove
   }
 
   @IBAction func backBtnAction(_ sender: NSButton) {
-    window?.orderOut(self)
     player.switchBackFromMiniPlayer(automatically: false)
   }
 

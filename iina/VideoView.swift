@@ -122,7 +122,7 @@ class VideoView: NSView {
 
   override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
 
-    guard !playlistShown && hasPlayableFiles else { return super.draggingUpdated(sender) }
+    guard !player.isInMiniPlayer && !playlistShown && hasPlayableFiles else { return super.draggingUpdated(sender) }
 
     func inTriggerArea(_ point: NSPoint?) -> Bool {
       guard let point = point, let frame = player.mainWindow.window?.frame else { return false }
@@ -163,21 +163,23 @@ class VideoView: NSView {
   // MARK: Display link
 
   func startDisplayLink() {
-    CVDisplayLinkCreateWithActiveCGDisplays(&link)
+    if link == nil {
+      CVDisplayLinkCreateWithActiveCGDisplays(&link)
+    }
     guard let link = link else {
       Logger.fatal("Cannot Create display link!")
     }
-    updateDisplaylink()
+    updateDisplayLink()
     CVDisplayLinkSetOutputCallback(link, displayLinkCallback, mutableRawPointerOf(obj: player.mpv))
     CVDisplayLinkStart(link)
   }
 
-  func stopDisplaylink() {
+  func stopDisplayLink() {
     guard let link = link, CVDisplayLinkIsRunning(link) else { return }
     CVDisplayLinkStop(link)
   }
 
-  func updateDisplaylink() {
+  func updateDisplayLink() {
     guard let window = window, let link = link, let screen = window.screen else { return }
     let displayId = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as! UInt32
     if (currentDisplay == displayId) {

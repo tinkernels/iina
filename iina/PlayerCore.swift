@@ -313,7 +313,7 @@ class PlayerCore: NSObject {
   // unload main window video view
   func uninitVideo() {
     guard mainWindow.isWindowLoaded else { return }
-    mainWindow.videoView.stopDisplaylink()
+    mainWindow.videoView.stopDisplayLink()
     mainWindow.videoView.uninit()
   }
 
@@ -424,6 +424,8 @@ class PlayerCore: NSObject {
     if mainWindow.window?.aspectRatio == nil {
       mainWindow.window?.aspectRatio = NSSize(width: AppData.widthWhenNoVideo, height: AppData.heightWhenNoVideo)
     }
+    // hide mini player
+    miniPlayer.window?.orderOut(nil)
     isInMiniPlayer = false
     mainWindow.updateTitle()
   }
@@ -1099,14 +1101,13 @@ class PlayerCore: NSObject {
         if !isInMiniPlayer && !mainWindow.fsState.isFullscreen && !switchedBackFromMiniPlayerManually {
           Logger.log("Current media is audio, switch to mini player", subsystem: subsystem)
           DispatchQueue.main.sync {
-            switchToMiniPlayer(automatically: false)
+            switchToMiniPlayer(automatically: true)
           }
         }
       } else {
         if isInMiniPlayer && !switchedToMiniPlayerManually {
           Logger.log("Current media is not audio, switch to normal window", subsystem: subsystem)
           DispatchQueue.main.sync {
-            miniPlayer.close()
             switchBackFromMiniPlayer(automatically: true)
           }
         }

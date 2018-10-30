@@ -390,6 +390,10 @@ extension String {
     return (self as NSString).pathExtension.lowercased()
   }
 
+  var mpvFixedLengthQuoted: String {
+    return "%\(count)%\(self)"
+  }
+
   mutating func deleteLast(_ num: Int) {
     removeLast(Swift.min(num, count))
   }
@@ -462,6 +466,17 @@ extension NSImage {
     image.unlockFocus()
     image.isTemplate = false
 
+    return image
+  }
+  
+  static func maskImage(cornerRadius: CGFloat) -> NSImage {
+    let image = NSImage(size: NSSize(width: cornerRadius * 2, height: cornerRadius * 2), flipped: false) { rectangle in
+      let bezierPath = NSBezierPath(roundedRect: rectangle, xRadius: cornerRadius, yRadius: cornerRadius)
+      NSColor.black.setFill()
+      bezierPath.fill()
+      return true
+    }
+    image.capInsets = NSEdgeInsets(top: cornerRadius, left: cornerRadius, bottom: cornerRadius, right: cornerRadius)
     return image
   }
 }
