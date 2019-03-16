@@ -78,7 +78,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @IBOutlet weak var dockMenu: NSMenu!
 
   private func getReady() {
-    registerUserDefaultValues()
     menuController.bindMenuItems()
     PlayerCore.loadKeyBindings()
     isReady = true
@@ -87,6 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   // MARK: - App Delegate
 
   func applicationWillFinishLaunching(_ notification: Notification) {
+    registerUserDefaultValues()
     Logger.log("App will launch")
 
     // register for url event
@@ -165,7 +165,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       if RemoteCommandController.useSystemMediaControl {
         Logger.log("Setting up MediaPlayer integration")
         RemoteCommandController.setup()
-        NowPlayingInfoManager.updateState(.playing)
+        NowPlayingInfoManager.updateState(.unknown)
       }
     }
 
@@ -249,6 +249,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    guard !PlayerCore.active.mainWindow.isWindowHidden else { return .terminateCancel }
     Logger.log("App should terminate")
     for pc in PlayerCore.playerCores {
      pc.terminateMPV()
@@ -509,7 +510,7 @@ struct CommandLineStatus {
     mpvArguments.removeAll()
     iinaArguments.removeAll()
     for arg in args {
-      let splitted = arg.dropFirst(2).split(separator: "=", maxSplits: 2)
+      let splitted = arg.dropFirst(2).split(separator: "=", maxSplits: 1)
       let name = String(splitted[0])
       if (name.hasPrefix("mpv-")) {
         // mpv args
