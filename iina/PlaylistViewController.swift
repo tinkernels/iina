@@ -295,11 +295,11 @@ class PlaylistViewController: NSViewController, NSTableViewDataSource, NSTableVi
         }
         Logger.log("Playlist Drag & Drop from \(oldIndex) to \(row)")
       }
-    } else {
-      // Otherwise, could be copy/cut & paste within playlistTableView
-      return pasteFromPasteboard(tableView, row: row, from: info.draggingPasteboard)
+      player.postNotification(.iinaPlaylistChanged)
+      return true
     }
-    return true
+    // Otherwise, could be copy/cut & paste within playlistTableView
+    return pasteFromPasteboard(tableView, row: row, from: info.draggingPasteboard)
   }
 
   // MARK: - Edit Menu Support
@@ -525,12 +525,7 @@ class PlaylistViewController: NSViewController, NSTableViewDataSource, NSTableVi
 
       if identifier == .isChosen {
         // left column
-        let currentPos = info.videoPosition!
-        if currentPos.between(chapter.time, nextChapterTime) {
-          v.textField?.stringValue = Constants.String.play
-        } else {
-          v.textField?.stringValue = ""
-        }
+        v.textField?.stringValue = (info.chapter == row) ? Constants.String.play : ""
         return v
       } else if identifier == .trackName {
         // right column
