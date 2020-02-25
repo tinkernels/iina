@@ -9,8 +9,6 @@
 import Cocoa
 import Foundation
 
-fileprivate typealias PK = Preference.Key
-
 fileprivate let yes_str = "yes"
 fileprivate let no_str = "no"
 
@@ -147,12 +145,9 @@ class MPVController: NSObject {
 
     setUserOption(PK.screenshotTemplate, type: .string, forName: MPVOption.Screenshot.screenshotTemplate)
 
-    if #available(macOS 10.13, *) {
-      chkErr(mpv_set_option_string(mpv, MPVOption.Input.inputMediaKeys, no_str))
-    } else {
-      setUserOption(PK.useMediaKeys, type: .bool, forName: MPVOption.Input.inputMediaKeys)
-    }
-    setUserOption(PK.useAppleRemote, type: .bool, forName: MPVOption.Input.inputAppleremote)
+    // Disable mpv's media key system as it now uses the MediaPlayer Framework.
+    // Dropped media key support in 10.11 and 10.12.
+    chkErr(mpv_set_option_string(mpv, MPVOption.Input.inputMediaKeys, no_str))
 
     setUserOption(PK.keepOpenOnFileEnd, type: .other, forName: MPVOption.Window.keepOpen) { key in
       let keepOpen = Preference.bool(for: PK.keepOpenOnFileEnd)
@@ -254,8 +249,9 @@ class MPVController: NSObject {
       return Preference.bool(for: key) ? nil : "no"
     }
 
-    setUserOption(PK.defaultCacheSize, type: .int, forName: MPVOption.Cache.cacheDefault)
-    setUserOption(PK.cacheBufferSize, type: .int, forName: MPVOption.Cache.cacheBackbuffer)
+    setUserOption(PK.defaultCacheSize, type: .other, forName: MPVOption.Demuxer.demuxerMaxBytes) { key in
+      return "\(Preference.integer(for: key))KiB"
+    }
     setUserOption(PK.secPrefech, type: .int, forName: MPVOption.Cache.cacheSecs)
 
     setUserOption(PK.userAgent, type: .other, forName: MPVOption.Network.userAgent) { key in
@@ -529,7 +525,7 @@ class MPVController: NSObject {
     mpv_get_property(mpv, name, MPV_FORMAT_NODE, &node)
     let parsed = try? MPVNode.parse(node)
     mpv_free_node_contents(&node)
-    return parsed!
+    return parsed
   }
 
   // MARK: - Hooks
@@ -564,7 +560,9 @@ class MPVController: NSObject {
     case MPV_EVENT_SHUTDOWN:
       let quitByMPV = !player.isMpvTerminated
       if quitByMPV {
-        NSApp.terminate(nil)
+        DispatchQueue.main.sync {
+          NSApp.terminate(nil)
+        }
       } else {
         mpv_destroy(mpv)
         mpv = nil
@@ -687,7 +685,9 @@ class MPVController: NSObject {
     player.info.displayHeight = 0
     player.info.videoDuration = VideoTime(duration)
     if let filename = getString(MPVProperty.path) {
-      player.info.cachedVideoDurationAndProgress[filename]?.duration = duration
+      player.info.infoQueue.async {
+        self.player.info.cachedVideoDurationAndProgress[filename]?.duration = duration
+      }
     }
     player.info.videoPosition = VideoTime(pos)
     player.fileLoaded()
@@ -715,7 +715,9 @@ class MPVController: NSObject {
       // video size changed
       player.info.displayWidth = dwidth
       player.info.displayHeight = dheight
-      player.notifyMainWindowVideoSizeChanged()
+      DispatchQueue.main.sync {
+        player.notifyMainWindowVideoSizeChanged()
+      }
     }
   }
 
@@ -738,6 +740,7 @@ class MPVController: NSObject {
 
     case MPVOption.TrackSelection.aid:
       player.info.aid = Int(getInt(MPVOption.TrackSelection.aid))
+      guard player.mainWindow.loaded else { break }
       DispatchQueue.main.sync {
         player.mainWindow?.muteButton.isEnabled = (player.info.aid != 0)
         player.mainWindow?.volumeSlider.isEnabled = (player.info.aid != 0)
@@ -771,10 +774,14 @@ class MPVController: NSObject {
       player.syncUI(.playButton)
 
     case MPVProperty.chapter:
-      player.info.chapter = Int(getInt(MPVProperty.chapter))
+      let index = Int(getInt(MPVProperty.chapter))
+      player.info.chapter = index
       player.syncUI(.time)
       player.syncUI(.chapterList)
       player.postNotification(.iinaMediaTitleChanged)
+      if let chapter = player.info.chapters[at: index] {
+        player.sendOSD(.chapter(chapter.title))
+      }
 
     case MPVOption.PlaybackControl.speed:
       needReloadQuickSettingsView = true
