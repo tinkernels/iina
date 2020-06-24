@@ -72,16 +72,17 @@ class FilterWindowController: NSWindowController, NSWindowDelegate {
     // notifications
     let notiName: Notification.Name = filterType == MPVProperty.af ? .iinaAFChanged : .iinaVFChanged
     NotificationCenter.default.addObserver(self, selector: #selector(reloadTableInMainThread), name: notiName, object: nil)
-    NotificationCenter.default.addObserver(self, selector: #selector(reloadTableInMainThread), name: .iinaMainWindowChanged, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(reloadTable), name: .iinaMainWindowChanged, object: nil)
   }
 
   @objc
   func reloadTableInMainThread() {
-    DispatchQueue.main.sync {
-      reloadTable()
+    DispatchQueue.main.async {
+      self.reloadTable()
     }
   }
 
+  @objc
   func reloadTable() {
     filters = PlayerCore.active.mpv.getFilters(filterType)
     filterIsSaved = [Bool](repeatElement(false, count: filters.count))

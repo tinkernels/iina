@@ -74,6 +74,7 @@ struct Preference {
     static let resumeLastPosition = Key("resumeLastPosition")
 
     static let alwaysFloatOnTop = Key("alwaysFloatOnTop")
+    static let alwaysShowOnTopIcon = Key("alwaysShowOnTopIcon")
 
     static let pauseWhenMinimized = Key("pauseWhenMinimized")
     static let pauseWhenInactive = Key("pauseWhenInactive")
@@ -228,6 +229,7 @@ struct Preference {
     static let forceTouchAction = Key("forceTouchAction")
 
     static let showRemainingTime = Key("showRemainingTime")
+    static let touchbarShowRemainingTime = Key("touchbarShowRemainingTime")
 
     static let followGlobalSeekTypeWhenAdjustSlider = Key("followGlobalSeekTypeWhenAdjustSlider")
 
@@ -678,6 +680,7 @@ struct Preference {
     .useMediaKeys: true,
     .useAppleRemote: false,
     .alwaysFloatOnTop: false,
+    .alwaysShowOnTopIcon: false,
     .blackOutMonitor: false,
     .pauseWhenMinimized: false,
     .pauseWhenInactive: false,
@@ -693,6 +696,7 @@ struct Preference {
     .resizeWindowTiming: ResizeWindowTiming.onlyWhenOpen.rawValue,
     .resizeWindowOption: ResizeWindowOption.videoSize10.rawValue,
     .showRemainingTime: false,
+    .touchbarShowRemainingTime: true,
     .enableThumbnailPreview: true,
     .maxThumbnailPreviewCacheSize: 500,
     .enableThumbnailForRemoteFiles: false,
