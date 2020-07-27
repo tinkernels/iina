@@ -94,6 +94,8 @@ struct Preference {
 
     static let playlistAutoAdd = Key("playlistAutoAdd")
     static let playlistAutoPlayNext = Key("playlistAutoPlayNext")
+    static let playlistShowMetadata = Key("playlistShowMetadata")
+    static let playlistShowMetadataInMusicMode = Key("playlistShowMetadataInMusicMode")
 
     // UI
 
@@ -357,6 +359,7 @@ struct Preference {
     case fullscreen
     case pause
     case hideOSC
+    case togglePIP
 
     static var defaultValue = MouseClickAction.none
 
@@ -690,6 +693,8 @@ struct Preference {
 
     .playlistAutoAdd: true,
     .playlistAutoPlayNext: true,
+    .playlistShowMetadata: true,
+    .playlistShowMetadataInMusicMode: true,
 
     .usePhysicalResolution: true,
     .initialWindowSizePosition: "",

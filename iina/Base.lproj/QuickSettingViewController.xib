@@ -709,8 +709,7 @@
                                                                                     <constraint firstAttribute="height" constant="36" id="06s-6F-ftM"/>
                                                                                 </constraints>
                                                                                 <userDefinedRuntimeAttributes>
-                                                                                    <userDefinedRuntimeAttribute type="string" keyPath="title" value="Deinterlace"/>
-                                                                                    <userDefinedRuntimeAttribute type="boolean" keyPath="hasBackground" value="YES"/>
+                                                                                    <userDefinedRuntimeAttribute type="string" keyPath="title" value="quicksetting.deinterlace"/>
                                                                                 </userDefinedRuntimeAttributes>
                                                                             </customView>
                                                                             <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="vFH-Zl-rQn">
@@ -722,8 +721,7 @@
                                                                                     <constraint firstAttribute="height" constant="36" id="U7r-jZ-xhE"/>
                                                                                 </constraints>
                                                                                 <userDefinedRuntimeAttributes>
-                                                                                    <userDefinedRuntimeAttribute type="string" keyPath="title" value="Hardware Decoding"/>
-                                                                                    <userDefinedRuntimeAttribute type="boolean" keyPath="hasBackground" value="YES"/>
+                                                                                    <userDefinedRuntimeAttribute type="string" keyPath="title" value="quicksetting.hwdec"/>
                                                                                 </userDefinedRuntimeAttributes>
                                                                             </customView>
                                                                         </subviews>
@@ -795,7 +793,7 @@
                                                                 <constraint firstItem="ItN-JT-puN" firstAttribute="centerY" secondItem="dsX-c1-BZP" secondAttribute="centerY" id="SAV-G5-5wL"/>
                                                                 <constraint firstItem="g3A-4u-nNt" firstAttribute="top" secondItem="8ZJ-PD-t0R" secondAttribute="bottom" constant="7" id="SKe-RW-aSJ"/>
                                                                 <constraint firstItem="Cec-wN-J62" firstAttribute="centerY" secondItem="SL7-DZ-5ff" secondAttribute="centerY" id="SbN-O3-hQF"/>
-                                                                <constraint firstItem="8ZJ-PD-t0R" firstAttribute="top" secondItem="rsV-qL-l7b" secondAttribute="bottom" constant="20" id="SsM-RU-d20"/>
+                                                                <constraint firstItem="8ZJ-PD-t0R" firstAttribute="top" secondItem="ykw-rb-M9D" secondAttribute="bottom" constant="20" id="SsM-RU-d20"/>
                                                                 <constraint firstItem="8Uj-eX-hSm" firstAttribute="leading" secondItem="5v4-Te-950" secondAttribute="leading" constant="20" id="T08-gr-bMl"/>
                                                                 <constraint firstItem="mjX-Jf-925" firstAttribute="trailing" secondItem="UWh-M9-5Nw" secondAttribute="trailing" id="Tfz-E0-gcH"/>
                                                                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="7vv-En-VYY" secondAttribute="trailing" constant="35" id="UG0-YC-mdd"/>
@@ -893,7 +891,7 @@
                                         <rect key="frame" x="0.0" y="0.0" width="360" height="823"/>
                                         <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="oVx-Sp-Lhl">
                                             <rect key="frame" x="0.0" y="0.0" width="360" height="823"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="NZU-RD-Dm3" customClass="FlippedView" customModule="IINA" customModuleProvider="target">
                                                     <rect key="frame" x="0.0" y="315" width="360" height="508"/>
@@ -913,7 +911,7 @@
                                                                     <rect key="frame" x="0.0" y="388" width="360" height="76"/>
                                                                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="vgF-KN-yHf">
                                                                         <rect key="frame" x="0.0" y="0.0" width="360" height="76"/>
-                                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                        <autoresizingMask key="autoresizingMask"/>
                                                                         <subviews>
                                                                             <tableView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" viewBased="YES" id="FLg-2m-Zaq">
                                                                                 <rect key="frame" x="0.0" y="0.0" width="360" height="76"/>
