@@ -523,18 +523,32 @@ class PlayerCore: NSObject {
   func screenshot() {
     guard let vid = info.vid, vid > 0 else { return }
     let option = Preference.bool(for: .screenshotIncludeSubtitle) ? "subtitles" : "video"
+    let saveToFile = Preference.bool(for: .screenshotSaveToFile)
+    let saveToClipboard = Preference.bool(for: .screenshotCopyToClipboard)
+    var image: NSImage? = nil
     var screenshotTaken = false
-    if Preference.bool(for: .screenshotSaveToFile) {
+    if saveToFile {
       mpv.command(.screenshot, args: [option])
       screenshotTaken = true
     }
-    if Preference.bool(for: .screenshotCopyToClipboard), let screenshot = mpv.getScreenshot(option) {
-      NSPasteboard.general.clearContents()
-      NSPasteboard.general.writeObjects([screenshot])
-      screenshotTaken = true
+    if let screenshot = mpv.getScreenshot(option) {
+      image = screenshot
+      if saveToClipboard {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects([screenshot])
+        screenshotTaken = true
+      }
     }
     if screenshotTaken {
-      sendOSD(.screenshot)
+      if let image = image {
+        let osdView = ScreenshootOSDView()
+        osdView.setImage(image,
+                         size: image.size.shrink(toSize: NSSize(width: 300, height: 200)),
+                         fileURL: saveToFile ? Utility.getLatestScreenshot() : nil)
+        sendOSD(.screenshot, forcedTimeout: 5, accessoryView: osdView.view, context: osdView)
+      } else {
+        sendOSD(.screenshot)
+      }
     }
   }
 
@@ -1065,8 +1079,7 @@ class PlayerCore: NSObject {
       getPlaylist()
       getChapters()
       clearAbLoop()
-      syncPlayTimeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(AppData.getTimeInterval),
-                                               target: self, selector: #selector(self.syncUITime), userInfo: nil, repeats: true)
+      createSyncUITimer()
       if #available(macOS 10.12.2, *) {
         touchBarSupport.setupTouchBarUI()
       }
@@ -1196,6 +1209,17 @@ class PlayerCore: NSObject {
 
   // MARK: - Sync with UI in MainWindow
 
+  func createSyncUITimer() {
+    invalidateTimer()
+    syncPlayTimeTimer = Timer.scheduledTimer(
+      timeInterval: TimeInterval(DurationDisplayTextField.precision >= 2 ? AppData.syncTimePreciseInterval : AppData.syncTimeInterval),
+      target: self,
+      selector: #selector(self.syncUITime),
+      userInfo: nil,
+      repeats: true
+    )
+  }
+
   func notifyMainWindowVideoSizeChanged() {
     mainWindow.adjustFrameByVideoSize()
     if isInMiniPlayer {
@@ -1310,17 +1334,12 @@ class PlayerCore: NSObject {
 
     case .additionalInfo:
       DispatchQueue.main.async {
-        let timeString = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
-        if let capacity = PowerSource.getList().filter({ $0.type == "InternalBattery" }).first?.currentCapacity {
-          self.mainWindow.additionalInfoLabel.stringValue = "\(timeString) | \(capacity)%"
-        } else {
-          self.mainWindow.additionalInfoLabel.stringValue = "\(timeString)"
-        }
+        self.mainWindow.updateAdditionalInfo()
       }
     }
   }
 
-  func sendOSD(_ osd: OSDMessage, autoHide: Bool = true, accessoryView: NSView? = nil) {
+  func sendOSD(_ osd: OSDMessage, autoHide: Bool = true, forcedTimeout: Float? = nil, accessoryView: NSView? = nil, context: Any? = nil) {
     guard mainWindow.loaded && Preference.bool(for: .enableOSD) else { return }
     if info.disableOSDForFileLoading {
       guard case .fileStart = osd else {
@@ -1328,7 +1347,11 @@ class PlayerCore: NSObject {
       }
     }
     DispatchQueue.main.async {
-      self.mainWindow.displayOSD(osd, autoHide: autoHide, accessoryView: accessoryView)
+      self.mainWindow.displayOSD(osd,
+                                 autoHide: autoHide,
+                                 forcedTimeout: forcedTimeout,
+                                 accessoryView: accessoryView,
+                                 context: context)
     }
   }
 

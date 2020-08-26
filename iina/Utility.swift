@@ -14,7 +14,7 @@ class Utility {
 
   static let supportedFileExt: [MPVTrack.TrackType: [String]] = [
     .video: ["mkv", "mp4", "avi", "m4v", "mov", "3gp", "ts", "mts", "m2ts", "wmv", "flv", "f4v", "asf", "webm", "rm", "rmvb", "qt", "dv", "mpg", "mpeg", "mxf", "vob", "gif"],
-    .audio: ["mp3", "aac", "mka", "dts", "flac", "ogg", "oga", "mogg", "m4a", "ac3", "opus", "wav", "wv", "aiff", "ape", "tta", "tak"],
+    .audio: ["mp3", "aac", "mka", "dts", "flac", "ogg", "oga", "mogg", "m4a", "ac3", "opus", "wav", "wv", "aiff", "aif", "ape", "tta", "tak"],
     .sub: ["utf", "utf8", "utf-8", "idx", "sub", "srt", "smi", "rt", "ssa", "aqt", "jss", "js", "ass", "mks", "vtt", "sup", "scc"]
   ]
   static let playableFileExt = supportedFileExt[.video]! + supportedFileExt[.audio]!
@@ -445,6 +445,26 @@ class Utility {
     default:
       return (NSAppearance(named: .vibrantDark), .dark)
     }
+  }
+
+  static func getLatestScreenshot() -> URL? {
+    guard let path = Preference.string(for: .screenshotFolder) else { return nil }
+    let folder = URL(fileURLWithPath: NSString(string: path).expandingTildeInPath)
+    guard let contents = try? FileManager.default.contentsOfDirectory(
+      at: folder,
+      includingPropertiesForKeys: [.creationDateKey],
+      options: .skipsSubdirectoryDescendants) else { return nil }
+
+    var latestDate = Date.distantPast
+    var latestFile: URL = contents[0]
+
+    for file in contents {
+      if let date = try? file.resourceValues(forKeys: [.creationDateKey]).creationDate, date > latestDate {
+        latestDate = date
+        latestFile = file
+      }
+    }
+    return latestFile
   }
 
   // MARK: - Util classes
