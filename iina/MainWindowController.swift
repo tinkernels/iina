@@ -9,8 +9,14 @@
 import Cocoa
 import Mustache
 
-fileprivate let TitleBarHeightNormal: CGFloat = 22
-fileprivate let TitleBarHeightWithOSC: CGFloat = 22 + 24 + 10
+fileprivate let TitleBarHeightNormal: CGFloat = {
+  if #available(macOS 10.16, *) {
+    return 28
+  } else {
+    return 22
+  }
+}()
+fileprivate let TitleBarHeightWithOSC: CGFloat = TitleBarHeightNormal + 24 + 10
 fileprivate let TitleBarHeightWithOSCInFullScreen: CGFloat = 24 + 10
 fileprivate let OSCTopMainViewMarginTop: CGFloat = 26
 fileprivate let OSCTopMainViewMarginTopInFullScreen: CGFloat = 6
@@ -379,6 +385,7 @@ class MainWindowController: PlayerWindowController {
     }
   }
 
+  var titlebarAccesoryViewController: NSTitlebarAccessoryViewController!
   @IBOutlet var titlebarAccessoryView: NSView!
 
   /** Current OSC view. */
@@ -476,7 +483,7 @@ class MainWindowController: PlayerWindowController {
 
     titleBarView.layerContentsRedrawPolicy = .onSetNeedsDisplay
 
-    let titlebarAccesoryViewController = NSTitlebarAccessoryViewController()
+    titlebarAccesoryViewController = NSTitlebarAccessoryViewController()
     titlebarAccesoryViewController.view = titlebarAccessoryView
     titlebarAccesoryViewController.layoutAttribute = .right
     window.addTitlebarAccessoryViewController(titlebarAccesoryViewController)
@@ -1113,7 +1120,8 @@ class MainWindowController: PlayerWindowController {
     }
     standardWindowButtons.forEach { $0.alphaValue = 0 }
     titleTextField?.alphaValue = 0
-
+    
+    window!.removeTitlebarAccessoryViewController(at: 0)
     setWindowFloatingOnTop(false, updateOnTopStatus: false)
 
     thumbnailPeekView.isHidden = true
@@ -1222,6 +1230,7 @@ class MainWindowController: PlayerWindowController {
     if player.info.isPlaying {
       setWindowFloatingOnTop(isOntop, updateOnTopStatus: false)
     }
+    window!.addTitlebarAccessoryViewController(titlebarAccesoryViewController)
 
     resetCollectionBehavior()
     updateWindowParametersForMPV()
@@ -1261,8 +1270,14 @@ class MainWindowController: PlayerWindowController {
     windowWillExitFullScreen(Notification(name: .iinaLegacyFullScreen))
     // stylemask
     window.styleMask.remove(.borderless)
-    window.styleMask.remove(.fullScreen)
-
+    if #available(macOS 10.16, *) {
+      window.styleMask.insert(.titled)
+      (window as! MainWindow).forceKeyAndMain = false
+      window.level = .normal
+    } else {
+      window.styleMask.remove(.fullScreen)
+    }
+ 
     restoreDockSettings()
     // restore window frame ans aspect ratio
     let videoSize = player.videoSizeForDisplay
@@ -1286,7 +1301,13 @@ class MainWindowController: PlayerWindowController {
     windowWillEnterFullScreen(Notification(name: .iinaLegacyFullScreen))
     // stylemask
     window.styleMask.insert(.borderless)
-    window.styleMask.insert(.fullScreen)
+    if #available(macOS 10.16, *) {
+      window.styleMask.remove(.titled)
+      (window as! MainWindow).forceKeyAndMain = true
+      window.level = .floating
+    } else {
+      window.styleMask.insert(.fullScreen)
+    }
     // cancel aspect ratio
     window.resizeIncrements = NSSize(width: 1, height: 1)
     // auto hide menubar and dock
@@ -1294,7 +1315,7 @@ class MainWindowController: PlayerWindowController {
     NSApp.presentationOptions.insert(.autoHideDock)
     // set frame
     let screen = window.screen ?? NSScreen.main!
-    window.setFrame(NSRect(origin: .zero, size: screen.frame.size), display: true, animate: true)
+    window.setFrame(screen.frame, display: true, animate: true)
     // call delegate
     windowDidEnterFullScreen(Notification(name: .iinaLegacyFullScreen))
   }
